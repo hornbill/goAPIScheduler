@@ -1,0 +1,41 @@
+{
+  "APIKey": "API Key goes here",
+  "InstanceID": "Instance name goes here",
+  "Zone":"eur",
+  "Schedule": [
+    {
+      "Enabled":true,
+      "CronSchedule":"0 0 9 * * 1-6",
+      "ScheduleFrom":"",
+      "ScheduleTo":"",
+      "Service":"",
+      "API":"",
+      "APIParams":{
+        "0":
+        {
+          "Type":"Content",
+          "Parameter":"paramName",
+          "Content":"parameter content"
+        },
+        "1":
+        {
+          "Type":"Open",
+          "Parameter":"complexParamName",
+          "Content":""
+        },
+        "2":
+        {
+          "Type":"Content",
+          "Parameter":"paramName",
+          "Content":"parameter content"
+        },
+        "3":
+        {
+          "Type":"Close",
+          "Parameter":"complexParamName",
+          "Content":""
+        }
+      }
+    }
+  ]
+}
