@@ -82,21 +82,21 @@ Example JSON File:
 * "InstanceId" - the ID of your Hornbill instance
 * "Zone" - Allows you to specify the ZONE used for creating the XMLMC EndPoint URL (default is eur): https://{ZONE}api.hornbill.com/{INSTANCE}/
 * "Schedule" - A JSON array, where each object within this array contains the configuration for one scheduled and repeatable task:
-..* "Enabled" - set to true to enable the schedule item
-..* "CronSchedule" - A Cron compatible schedule expression to schedule the API call by
-..* "ScheduleFrom" - An RFC3339 formatted time string, to specify the date & time to start running any instances of the particular schedule entry. This can contain an empty string to allow you to not specify a date/time to start the schedule from
-..* "ScheduleTo" - An RFC3339 formatted time string, to specify the date & time to stop running any more instances of the particular schedule entry. This can contain an empty string, should you wish the schedule to run indefinitely
-..* "Service" - The Hornbill Service that contains the API you wish to running
-..* "API" - The name of the API to run
-..* "APIParams" - A JSON object, containing one or more other JSON objects, allowing you to specify the Order that the parameter should be presented to the API, the parameter type, the parameter ID and the content to write:
-..* "Type" - Can be set to:
-..* -- 'Content' - To write a parameter name (Parameter) and value (Content);
-..* -- 'Open' - Allows for complex parameters to be written to the API, within the element specified in this node - must be matched with a parameter type of 'Close'
-..* -- 'Close' - Allows for complex parameters to be written to the API, within the element specified in this node - must be matched with a parameter type of 'Open'
-..* 'Parameter' - The name of the parameter
-..* 'Content' - the string that should be written within the Parameter node.
+	* "Enabled" - set to true to enable the schedule item
+	* "CronSchedule" - A Cron compatible schedule expression to schedule the API call by
+	* "ScheduleFrom" - An RFC3339 formatted time string, to specify the date & time to start running any instances of the particular schedule entry. This can contain an empty string to allow you to not specify a date/time to start the schedule from
+	* "ScheduleTo" - An RFC3339 formatted time string, to specify the date & time to stop running any more instances of the particular schedule entry. This can contain an empty string, should you wish the schedule to run indefinitely
+	* "Service" - The Hornbill Service that contains the API you wish to running
+	* "API" - The name of the API to run
+	* "APIParams" - A JSON object, containing one or more other JSON objects, allowing you to specify the Order that the parameter should be presented to the API, the parameter type, the parameter ID and the content to write:
+	* "Type" - Can be set to:
+		* 'Content' - To write a parameter name (Parameter) and value (Content);
+		* 'Open' - Allows for complex parameters to be written to the API, within the element specified in this node - must be matched with a parameter type of 'Close'
+		* 'Close' - Allows for complex parameters to be written to the API, within the element specified in this node - must be matched with a parameter type of 'Open'
+	* 'Parameter' - The name of the parameter
+	* 'Content' - the string that should be written within the Parameter node.
 
-For API parameters in Hornbill that require a Date/Time string value, rather than a hard-coding this date/time within the configuration, you can specify an expression to write a date/time string whose value is the number of minutes/hours/days/months/years AFTER the date/time that the scheduled event is ran. This can be particularly useful when scheduling the raising of tasks within Hornbill, and you need to specify a targeted time of completion for the task.
+For API parameters in Hornbill that require a Date/Time string value, rather than a hard-coding this date/time within the configuration, you can specify an expression to write a date/time string whose value is the number of minutes/hours/days/months/years AFTER the date/time that the scheduled event is ran. This can be particularly useful when scheduling the raising of tasks within Hornbill, and you need to specify a targeted date of completion for the task.
 
 The expression should be written in this format:
 
@@ -104,17 +104,17 @@ nowPlus::X::Y
 
 Where X is an integer value, and Y is the unit of time. So for example:
 
-nowPlus::2::minutes - would return the scheduled time plus 2 minutes
-nowPlus::4::days - would return the scheduled time plus 4 days
-nowPlus::1::years - would return the scheduled time plus 1 year
+* nowPlus::2::minutes - would return the scheduled time plus 2 minutes
+* nowPlus::4::days - would return the scheduled time plus 4 days
+* nowPlus::1::years - would return the scheduled time plus 1 year
 
 The units of time currently supported are:
 
-minutes
-hours
-days
-months
-years
+* minutes
+* hours
+* days
+* months
+* years
 
 ## Execute
 Command Line Parameters
