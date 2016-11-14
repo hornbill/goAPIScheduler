@@ -11,13 +11,14 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 )
 
 const (
-	version    = "1.0.0"
+	version    = "1.0.1"
 	timeLayout = "2006-01-02T15:04:05.000Z"
 )
 
@@ -176,7 +177,40 @@ func apiRequest(scheduleEntry apiSchedStruct) {
 	for i := 0; i < len(scheduleEntry.APIParams); i++ {
 		switch scheduleEntry.APIParams[strconv.Itoa(i)].Type {
 		case "Content":
-			espXmlmc.SetParam(scheduleEntry.APIParams[strconv.Itoa(i)].Parameter, scheduleEntry.APIParams[strconv.Itoa(i)].Content)
+			var strContent = scheduleEntry.APIParams[strconv.Itoa(i)].Content
+
+			//Check to see if param content contains nowPlus::int::
+			var timeAddRegex = regexp.MustCompile(`nowPlus::[0-9]{0,5}::`)
+			var boolDynDate = timeAddRegex.MatchString(strContent)
+
+			//If we have a dynamic date requirement in the config, process
+			if boolDynDate {
+				result := strings.Split(strContent, "::")
+				//Setup time object
+				var timeThen = time.Now()
+				//Get vals from array
+				var timeAddValue, _ = strconv.Atoi(result[1])
+				var timeAddUnit = strings.ToLower(result[2])
+
+				if timeAddUnit == "years" {
+					timeThen = timeThen.AddDate(timeAddValue, 0, 0)
+					strContent = timeThen.Format("2006-01-02 15:04:05")
+				} else if timeAddUnit == "months" {
+					timeThen = timeThen.AddDate(0, timeAddValue, 0)
+					strContent = timeThen.Format("2006-01-02 15:04:05")
+				} else if timeAddUnit == "days" {
+					timeThen = timeThen.AddDate(0, 0, timeAddValue)
+					strContent = timeThen.Format("2006-01-02 15:04:05")
+				} else if timeAddUnit == "hours" {
+					timeThen = timeThen.Add(time.Duration(timeAddValue) * time.Hour)
+					strContent = timeThen.Format("2006-01-02 15:04:05")
+				} else if timeAddUnit == "minutes" {
+					timeThen = timeThen.Add(time.Duration(timeAddValue) * time.Minute)
+					strContent = timeThen.Format("2006-01-02 15:04:05")
+				}
+			}
+
+			espXmlmc.SetParam(scheduleEntry.APIParams[strconv.Itoa(i)].Parameter, strContent)
 		case "Open":
 			//Open XML element for complex params
 			espXmlmc.OpenElement(scheduleEntry.APIParams[strconv.Itoa(i)].Parameter)

@@ -94,7 +94,27 @@ Example JSON File:
 ..* -- 'Open' - Allows for complex parameters to be written to the API, within the element specified in this node - must be matched with a parameter type of 'Close'
 ..* -- 'Close' - Allows for complex parameters to be written to the API, within the element specified in this node - must be matched with a parameter type of 'Open'
 ..* 'Parameter' - The name of the parameter
-..* 'Content' - the string that should be written within the Parameter node
+..* 'Content' - the string that should be written within the Parameter node.
+
+For API parameters in Hornbill that require a Date/Time string value, rather than a hard-coding this date/time within the configuration, you can specify an expression to write a date/time string whose value is the number of minutes/hours/days/months/years AFTER the current date/time. This can be particularly useful when scheduling the raising of tasks within Hornbill, and you need to specify a targeted date of completion for the task.
+
+The expression should be written in this format:
+
+nowPlus::X::Y
+
+Where X is an integer value, and Y is the unit of time. So for example:
+
+nowPlus::2::minutes - would return the current time plus 2 minutes
+nowPlus::4::days - would return the current time plus 4 days
+nowPlus::1::years - would return the current time plus 1 year
+
+The units of time currently supported are:
+
+minutes
+hours
+days
+months
+years
 
 ## Execute
 Command Line Parameters
@@ -117,4 +137,3 @@ When the scheduler is executed, you will be presented with a list of all active 
 ## Exit
 
 To end the scheduler app, press CTRL+C in the Command Prompt window where the scheduler is running.
-
