@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	version    = "1.0.1"
+	version    = "1.0.2"
 	timeLayout = "2006-01-02T15:04:05.000Z"
 )
 
@@ -84,6 +84,7 @@ func main() {
 	currTime = strings.Replace(currTime, "Z", "", 1)
 
 	flag.StringVar(&configFileName, "file", "conf.json", "Name of the configuration file to load")
+	flag.Parse()
 
 	logger(3, "---- Hornbill API Scheduler V"+fmt.Sprintf("%v", version)+" ----", true)
 	logger(3, "Flag - Configuration File: "+fmt.Sprintf("%s", configFileName), true)
