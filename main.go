@@ -5,9 +5,6 @@ import (
 	"encoding/xml"
 	"flag"
 	"fmt"
-	"github.com/hornbill/color"
-	"github.com/hornbill/cron"
-	"github.com/hornbill/goApiLib"
 	"log"
 	"os"
 	"os/signal"
@@ -15,10 +12,14 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/hornbill/color"
+	"github.com/hornbill/cron"
+	"github.com/hornbill/goApiLib"
 )
 
 const (
-	version    = "1.0.2"
+	version    = "1.0.3"
 	timeLayout = "2006-01-02T15:04:05.000Z"
 )
 

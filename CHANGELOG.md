@@ -1,3 +1,9 @@
+## 1.0.3 (July 4th, 2017)
+
+Update:
+
+  - Updated third-party cron library to fix duplicate API call issue.
+
 ## 1.0.2 (February 7th, 2017)
 
 Defect fix:
