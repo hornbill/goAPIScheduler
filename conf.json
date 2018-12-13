@@ -1,7 +1,6 @@
 {
   "APIKey": "API Key goes here",
   "InstanceID": "Instance name goes here",
-  "Zone":"eur",
   "Schedule": [
     {
       "Enabled":true,

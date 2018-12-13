@@ -18,112 +18,48 @@ import (
 	"github.com/hornbill/goApiLib"
 )
 
-const (
-	version    = "1.0.3"
-	timeLayout = "2006-01-02T15:04:05.000Z"
-)
-
-var (
-	configFileName      string
-	apiCallConfig       apiCallStruct
-	boolConfLoaded      bool
-	timeNow             string
-	xmlmcInstanceConfig xmlmcConfigStruct
-)
-
-//----- Config Data Structs
-type apiCallStruct struct {
-	APIKey     string
-	InstanceID string
-	Zone       string
-	Schedule   []apiSchedStruct
-	URL        string
-}
-
-type apiSchedStruct struct {
-	Enabled      bool
-	CronSchedule string
-	ScheduleFrom string
-	ScheduleTo   string
-	Service      string
-	API          string
-	APIParams    map[string]apiParamStruct
-}
-
-type apiParamStruct struct {
-	Type      string
-	Parameter string
-	Content   string
-}
-
-//----- XMLMC Config and Interaction Structs
-type xmlmcConfigStruct struct {
-	instance string
-	url      string
-	zone     string
-}
-
-type xmlmcResponse struct {
-	MethodResult string      `xml:"status,attr"`
-	State        stateStruct `xml:"state"`
-}
-
-type stateStruct struct {
-	Code     string `xml:"code"`
-	ErrorRet string `xml:"error"`
-}
-
 func main() {
-	//-- Start Time for Log File
-	timeNow = time.Now().Format(time.RFC3339)
-	timeNow = strings.Replace(timeNow, ":", "-", -1)
-
-	//Time for CLI output
-	currTime := time.Now().Format(time.RFC3339)
-	currTime = strings.Replace(currTime, "-", "/", -1)
-	currTime = strings.Replace(currTime, "T", " ", 1)
-	currTime = strings.Replace(currTime, "Z", "", 1)
+	//-- Start Time for Log File Name
+	timeNow = time.Now().Format("20060102150405")
+	//Time for CLI output & Log File Content
+	currTime := time.Now().Format("2006/01/02 15:04:05")
 
 	flag.StringVar(&configFileName, "file", "conf.json", "Name of the configuration file to load")
+	flag.BoolVar(&configDryRun, "dryrun", false, "Set to true to run scheduler in dryrun mode. No API calls will be made")
 	flag.Parse()
-
-	logger(3, "---- Hornbill API Scheduler V"+fmt.Sprintf("%v", version)+" ----", true)
-	logger(3, "Flag - Configuration File: "+fmt.Sprintf("%s", configFileName), true)
-	logger(3, "Scheduler started at: "+currTime, true)
-
-	//-- Load Configuration File Into Struct
-	apiCallConfig, boolConfLoaded = loadConfig()
-	if boolConfLoaded != true {
-		logger(4, "Unable to load config, process closing.", true)
-		return
+	if configDryRun {
+		logEntryType = 6
+		logger(logEntryType, "RUNNING IN DRYRUN MODE", true)
 	}
 
-	//-- Set Instance ID
-	SetInstance(apiCallConfig.Zone, apiCallConfig.InstanceID)
-	//-- Generate Instance XMLMC Endpoint
-	apiCallConfig.URL = getInstanceURL()
+	logger(logEntryType, "---- Hornbill API Scheduler V"+fmt.Sprintf("%v", version)+" ----", true)
+	logger(logEntryType, "Flag - Configuration File: "+configFileName, true)
+	logger(logEntryType, "Scheduler started at: "+currTime, true)
 
-	logger(3, "Enabled Schedule Items:", true)
+	//-- Load Configuration File Into Struct
+	apiCallConfig = loadConfig()
+
+	logger(logEntryType, "Enabled Schedule Items:", true)
 	c := cron.New()
 	c.Start()
 	scheduleCount := 0
 	for _, scheduleEntry := range apiCallConfig.Schedule {
 		scheduleEntryUnique := scheduleEntry
-		if scheduleEntryUnique.Enabled == true {
+		if scheduleEntryUnique.Enabled {
 			scheduleCount++
-			logger(3, "----====----", true)
-			logger(3, "Cron Schedule: "+scheduleEntryUnique.CronSchedule, true)
-			logger(3, "Service: "+scheduleEntryUnique.Service, true)
-			logger(3, "API: "+scheduleEntryUnique.API, true)
+			logger(logEntryType, "----====----", true)
+			logger(logEntryType, "Cron Schedule: "+scheduleEntryUnique.CronSchedule, true)
+			logger(logEntryType, "Service: "+scheduleEntryUnique.Service, true)
+			logger(logEntryType, "API: "+scheduleEntryUnique.API, true)
 			c.AddFunc(scheduleEntryUnique.CronSchedule, func() { apiRequest(scheduleEntryUnique) })
 		}
 	}
 
 	if scheduleCount == 0 {
-		logger(3, "There are no scheduled tasks enabled!", true)
+		logger(logEntryType, "There are no scheduled tasks enabled!", true)
 		return
 	}
-	logger(3, "----====----", true)
+	logger(logEntryType, "----====----", true)
 
 	//Leave running, wait for user interruption
 	sig := make(chan os.Signal)
@@ -134,12 +70,9 @@ func main() {
 
 func apiRequest(scheduleEntry apiSchedStruct) {
 	//-- Time for CLI output
-	currTime := time.Now().Format(time.RFC3339)
-	currTime = strings.Replace(currTime, "-", "/", -1)
-	currTime = strings.Replace(currTime, "T", " ", 1)
-	currTime = strings.Replace(currTime, "Z", "", 1)
+	currTime := time.Now().Format("2006/01/02 15:04:05")
 
-	espXmlmc := apiLib.NewXmlmcInstance(apiCallConfig.URL)
+	espXmlmc := apiLib.NewXmlmcInstance(apiCallConfig.InstanceID)
 	espXmlmc.SetAPIKey(apiCallConfig.APIKey)
 
 	timeNow := time.Now()
@@ -223,26 +156,34 @@ func apiRequest(scheduleEntry apiSchedStruct) {
 	}
 
 	var XMLSTRING = espXmlmc.GetParam()
+	if configDryRun {
+		color.Yellow(currTime + " DRYRUN API Call details have been added to the log")
+		logger(logEntryType, "----DRYRUN API Request----", false)
+		logger(logEntryType, "Service: "+scheduleEntry.Service, false)
+		logger(logEntryType, "Method: "+scheduleEntry.API, false)
+		logger(logEntryType, "XML Parameters: "+XMLSTRING, false)
+		return
+	}
 	XMLAPICall, xmlmcErr := espXmlmc.Invoke(scheduleEntry.Service, scheduleEntry.API)
 	if xmlmcErr != nil {
 		color.Red("\n" + currTime + " API Call Failed: " + fmt.Sprintf("%v", xmlmcErr))
 		logger(4, "API Call Failed: "+fmt.Sprintf("%v", xmlmcErr), false)
-		logger(1, "Request Log XML "+fmt.Sprintf("%s", XMLSTRING), false)
+		logger(1, "Request Log XML "+XMLSTRING, false)
 	} else {
 		var xmlRespon xmlmcResponse
 		err := xml.Unmarshal([]byte(XMLAPICall), &xmlRespon)
 		if err != nil {
 			color.Red("\n" + currTime + " API Call Failed: " + fmt.Sprintf("%v", err))
 			logger(4, "API Call Failed: "+fmt.Sprintf("%v", err), false)
-			logger(1, "Request Log XML "+fmt.Sprintf("%s", XMLSTRING), false)
+			logger(1, "Request Log XML "+XMLSTRING, false)
 		} else {
 			if xmlRespon.MethodResult != "ok" {
 				color.Red("\n" + currTime + " API Call Failed: " + xmlRespon.State.ErrorRet)
 				logger(4, "API Call Failed: "+xmlRespon.State.ErrorRet, false)
-				logger(1, "Request Log XML "+fmt.Sprintf("%s", XMLSTRING), false)
+				logger(1, "Request Log XML "+XMLSTRING, false)
 			} else {
 				color.Green("\n" + currTime + " API Call Success: " + scheduleEntry.Service + "::" + scheduleEntry.API)
-				logger(1, "API Call Success: "+scheduleEntry.Service+"::"+scheduleEntry.API, false)
+				logger(logEntryType, "API Call Success: "+scheduleEntry.Service+"::"+scheduleEntry.API, false)
 
 			}
 		}
@@ -250,12 +191,11 @@ func apiRequest(scheduleEntry apiSchedStruct) {
 }
 
 //loadConfig -- Function to Load Configruation File
-func loadConfig() (apiCallStruct, bool) {
-	boolLoadConf := true
+func loadConfig() apiCallStruct {
 	//-- Check Config File File Exists
 	cwd, _ := os.Getwd()
 	configurationFilePath := cwd + "/" + configFileName
-	logger(1, "Loading Config File: "+configurationFilePath, false)
+	logger(logEntryType, "Loading Config File: "+configurationFilePath, false)
 	if _, fileCheckErr := os.Stat(configurationFilePath); os.IsNotExist(fileCheckErr) {
 		logger(4, "No Configuration File", true)
 		os.Exit(102)
@@ -265,7 +205,7 @@ func loadConfig() (apiCallStruct, bool) {
 	//-- Check For Error Reading File
 	if fileError != nil {
 		logger(4, "Error Opening Configuration File: "+fmt.Sprintf("%v", fileError), true)
-		boolLoadConf = false
+		os.Exit(102)
 	}
 
 	//-- New Decoder
@@ -277,10 +217,10 @@ func loadConfig() (apiCallStruct, bool) {
 	//-- Error Checking
 	if err != nil {
 		logger(4, "Error Decoding Configuration File: "+fmt.Sprintf("%v", err), true)
-		boolLoadConf = false
+		os.Exit(102)
 	}
 	//-- Return New Config
-	return edbConf, boolLoadConf
+	return edbConf
 }
 
 // logger -- function to append to the current log file
@@ -300,12 +240,11 @@ func logger(t int, s string, outputtoCLI bool) {
 
 	//-- Open Log File
 	f, err := os.OpenFile(logFileName, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0777)
-	// don't forget to close it
-	defer f.Close()
 	if err != nil {
 		color.Red("Error Creating Log File %q: %s \n", logFileName, err)
 		os.Exit(100)
 	}
+	defer f.Close()
 	// assign it to the standard logger
 	log.SetOutput(f)
 	var errorLogPrefix string
@@ -352,29 +291,4 @@ func logger(t int, s string, outputtoCLI bool) {
 	}
 
 	log.Println(errorLogPrefix + s)
-}
-
-// SetInstance sets the Zone and Instance config from the passed-through strZone and instanceID values
-func SetInstance(strZone string, instanceID string) {
-	//-- Set Zone
-	SetZone(strZone)
-	//-- Set Instance
-	xmlmcInstanceConfig.instance = instanceID
-	return
-}
-
-// SetZone - sets the Instance Zone to Overide current live zone
-func SetZone(zone string) {
-	xmlmcInstanceConfig.zone = zone
-	return
-}
-
-// getInstanceURL -- Function to build XMLMC End Point
-func getInstanceURL() string {
-	xmlmcInstanceConfig.url = "https://"
-	xmlmcInstanceConfig.url += xmlmcInstanceConfig.zone
-	xmlmcInstanceConfig.url += "api.hornbill.com/"
-	xmlmcInstanceConfig.url += xmlmcInstanceConfig.instance
-	xmlmcInstanceConfig.url += "/xmlmc/"
-	return xmlmcInstanceConfig.url
 }
