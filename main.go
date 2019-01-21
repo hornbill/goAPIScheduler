@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-xmlfmt/xmlfmt"
 	"github.com/hornbill/color"
 	"github.com/hornbill/cron"
 	"github.com/hornbill/goApiLib"
@@ -22,9 +23,10 @@ func main() {
 	//-- Start Time for Log File Name
 	timeNow = time.Now().Format("20060102150405")
 	//Time for CLI output & Log File Content
-	currTime := time.Now().Format("2006/01/02 15:04:05")
+	currTime := time.Now().Format(cliTimeLayout)
 
 	flag.StringVar(&configFileName, "file", "conf.json", "Name of the configuration file to load")
+	flag.BoolVar(&configDebug, "debug", false, "Set to true to run scheduler in debug mode, where API call request and reponse XML payload will be written to the log")
 	flag.BoolVar(&configDryRun, "dryrun", false, "Set to true to run scheduler in dryrun mode. No API calls will be made")
 	flag.Parse()
 	if configDryRun {
@@ -69,9 +71,6 @@ func main() {
 }
 
 func apiRequest(scheduleEntry apiSchedStruct) {
-	//-- Time for CLI output
-	currTime := time.Now().Format("2006/01/02 15:04:05")
-
 	espXmlmc := apiLib.NewXmlmcInstance(apiCallConfig.InstanceID)
 	espXmlmc.SetAPIKey(apiCallConfig.APIKey)
 
@@ -83,7 +82,7 @@ func apiRequest(scheduleEntry apiSchedStruct) {
 		if scheduleEntry.ScheduleFrom != "" {
 			timeFromParsed, err := time.Parse(timeLayout, scheduleEntry.ScheduleFrom)
 			if err != nil {
-				color.Red("\n[ERROR] " + currTime + " ScheduleFrom date.time parse failed, unable to run API [" + scheduleEntry.Service + "::" + scheduleEntry.API + "]")
+				color.Red("\n[ERROR] " + time.Now().Format(cliTimeLayout) + " ScheduleFrom date.time parse failed, unable to run API [" + scheduleEntry.Service + "::" + scheduleEntry.API + "]")
 				logger(4, "Unable to parse time string in ScheduleFrom for request ["+scheduleEntry.Service+"::"+scheduleEntry.API+"] : "+fmt.Sprintf("%v", err), false)
 				return
 			}
@@ -92,7 +91,7 @@ func apiRequest(scheduleEntry apiSchedStruct) {
 		if scheduleEntry.ScheduleTo != "" {
 			timeToParsed, err := time.Parse(timeLayout, scheduleEntry.ScheduleTo)
 			if err != nil {
-				color.Red("\n[ERROR] " + currTime + " ScheduleTo date.time parse failed, unable to run API [" + scheduleEntry.Service + "::" + scheduleEntry.API + "]")
+				color.Red("\n[ERROR] " + time.Now().Format(cliTimeLayout) + " ScheduleTo date.time parse failed, unable to run API [" + scheduleEntry.Service + "::" + scheduleEntry.API + "]")
 				logger(4, "Unable to parse time string in ScheduleTo for request ["+scheduleEntry.Service+"::"+scheduleEntry.API+"] : "+fmt.Sprintf("%v", err), false)
 				return
 			}
@@ -157,34 +156,41 @@ func apiRequest(scheduleEntry apiSchedStruct) {
 
 	var XMLSTRING = espXmlmc.GetParam()
 	if configDryRun {
-		color.Yellow(currTime + " DRYRUN API Call details have been added to the log")
+		color.Yellow(time.Now().Format(cliTimeLayout) + " DRYRUN API Call details have been added to the log")
 		logger(logEntryType, "----DRYRUN API Request----", false)
 		logger(logEntryType, "Service: "+scheduleEntry.Service, false)
 		logger(logEntryType, "Method: "+scheduleEntry.API, false)
 		logger(logEntryType, "XML Parameters: "+XMLSTRING, false)
 		return
 	}
+
+	color.Green("\n" + time.Now().Format(cliTimeLayout) + " Executing API Call: " + scheduleEntry.Service + "::" + scheduleEntry.API)
+	logger(logEntryType, "Executing API Call: "+scheduleEntry.Service+"::"+scheduleEntry.API, false)
+	if configDebug {
+		logger(1, "API Request Payload:\n"+xmlfmt.FormatXML(XMLSTRING, "\t", "	"), false)
+	}
+
 	XMLAPICall, xmlmcErr := espXmlmc.Invoke(scheduleEntry.Service, scheduleEntry.API)
 	if xmlmcErr != nil {
-		color.Red("\n" + currTime + " API Call Failed: " + fmt.Sprintf("%v", xmlmcErr))
+		color.Red(time.Now().Format(cliTimeLayout) + " API Call Failed: " + fmt.Sprintf("%v", xmlmcErr))
 		logger(4, "API Call Failed: "+fmt.Sprintf("%v", xmlmcErr), false)
-		logger(1, "Request Log XML "+XMLSTRING, false)
 	} else {
+		if configDebug {
+			logger(1, "API Response Payload:\n"+xmlfmt.FormatXML(XMLAPICall, "\t", "	"), false)
+		}
+
 		var xmlRespon xmlmcResponse
 		err := xml.Unmarshal([]byte(XMLAPICall), &xmlRespon)
 		if err != nil {
-			color.Red("\n" + currTime + " API Call Failed: " + fmt.Sprintf("%v", err))
+			color.Red(time.Now().Format(cliTimeLayout) + " API Call Failed: " + fmt.Sprintf("%v", err))
 			logger(4, "API Call Failed: "+fmt.Sprintf("%v", err), false)
-			logger(1, "Request Log XML "+XMLSTRING, false)
 		} else {
 			if xmlRespon.MethodResult != "ok" {
-				color.Red("\n" + currTime + " API Call Failed: " + xmlRespon.State.ErrorRet)
+				color.Red(time.Now().Format(cliTimeLayout) + " API Call Failed: " + xmlRespon.State.ErrorRet)
 				logger(4, "API Call Failed: "+xmlRespon.State.ErrorRet, false)
-				logger(1, "Request Log XML "+XMLSTRING, false)
 			} else {
-				color.Green("\n" + currTime + " API Call Success: " + scheduleEntry.Service + "::" + scheduleEntry.API)
+				color.Green(time.Now().Format(cliTimeLayout) + " API Call Success: " + scheduleEntry.Service + "::" + scheduleEntry.API)
 				logger(logEntryType, "API Call Success: "+scheduleEntry.Service+"::"+scheduleEntry.API, false)
-
 			}
 		}
 	}

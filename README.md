@@ -115,6 +115,7 @@ Command Line Parameters
 
 * file : This should point to your json configuration file and by default looks for a file in the current working directory called `conf.json`. If this is present you don't need to have the parameter.
 * dryrun : Defaults to `false`. Set to `true` to run the tool in dryrun mode, which outputs all API call details (service, method and payload) to the log without actually firing the API calls
+* debug : Defaults to `false`. Set to `true` to run the tool in debug mode, which outputs the API call request and reponse XML payload to the log file when not in dryrun mode
 
 `goAPIScheduler_w64.exe -file=conf.json -drytun=true`
 

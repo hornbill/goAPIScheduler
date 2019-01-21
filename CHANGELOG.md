@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 1.2.0 (January 21st, 2019)
+
+Features:
+
+- Added "debug" mode, to allow scheduler to output API call payloads to the log file
+
 ## 1.1.0 (December 13th, 2018)
 
 Features:
