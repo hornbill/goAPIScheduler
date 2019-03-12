@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 1.2.1 (March 12th 2019)
+
+Defect Fix:
+
+- Duplicate runs of scheduled APIs on certain builds of Windows
+
 ## 1.2.0 (January 21st, 2019)
 
 Features:

@@ -1,7 +1,7 @@
 package main
 
 const (
-	version       = "1.2.0"
+	version       = "1.2.1"
 	timeLayout    = "2006-01-02T15:04:05.000Z"
 	cliTimeLayout = "2006/01/02 15:04:05"
 )
@@ -10,6 +10,7 @@ var (
 	configFileName string
 	configDebug    bool
 	configDryRun   bool
+	configVersion  bool
 	logEntryType   = 3
 	apiCallConfig  apiCallStruct
 	boolConfLoaded bool

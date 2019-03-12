@@ -6,7 +6,7 @@ The utility provides a quick and easy way to schedule the running of Hornbill AP
 
 ### Windows
 
-* Download the ZIP archive containing the executables, configuration file and license;
+* Download the OS-specific ZIP archive containing the executables, configuration file and license;
 * Extract the ZIP archive into a folder you would like the application to run from e.g. 'C:\hornbill_scheduler\'.
 
 ## Configuration
@@ -117,14 +117,14 @@ Command Line Parameters
 * dryrun : Defaults to `false`. Set to `true` to run the tool in dryrun mode, which outputs all API call details (service, method and payload) to the log without actually firing the API calls
 * debug : Defaults to `false`. Set to `true` to run the tool in debug mode, which outputs the API call request and reponse XML payload to the log file when not in dryrun mode
 
-`goAPIScheduler_w64.exe -file=conf.json -drytun=true`
+`goAPIScheduler.exe -file=conf.json -dryrun=true`
 
 When you are ready to start the scheduler:
 
 * Open '''conf.json''' and add in the necessary configration;
 * Open Command Line Prompt as Administrator;
 * Change Directory to the folder containing the scheduler executables and configuration file 'C:\hornbill_scheduler\';
-* Run the command relevant to your OS: goAPIScheduler_w64.exe for 64 bit Windows systems, goAPIScheduler_w32.exe for 32 bit Windows systems  
+* Run the command relevant to your OS: goAPIScheduler.exe Windows systems
 * Follow all on-screen prompts, taking careful note of all prompts and messages provided.
 
 When the scheduler is executed, you will be presented with a list of all active schedule items from the configuration file, and these items will be executed as per the config at the relevant dates/times.

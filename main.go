@@ -15,8 +15,8 @@ import (
 
 	"github.com/go-xmlfmt/xmlfmt"
 	"github.com/hornbill/color"
-	"github.com/hornbill/cron"
-	"github.com/hornbill/goApiLib"
+	apiLib "github.com/hornbill/goApiLib"
+	"github.com/robfig/cron"
 )
 
 func main() {
@@ -28,12 +28,17 @@ func main() {
 	flag.StringVar(&configFileName, "file", "conf.json", "Name of the configuration file to load")
 	flag.BoolVar(&configDebug, "debug", false, "Set to true to run scheduler in debug mode, where API call request and reponse XML payload will be written to the log")
 	flag.BoolVar(&configDryRun, "dryrun", false, "Set to true to run scheduler in dryrun mode. No API calls will be made")
+	flag.BoolVar(&configVersion, "version", false, "Set to true to output the version")
 	flag.Parse()
 	if configDryRun {
 		logEntryType = 6
 		logger(logEntryType, "RUNNING IN DRYRUN MODE", true)
 	}
-
+	//-- If configVersion just output version number and die
+	if configVersion {
+		fmt.Printf("%v \n", version)
+		return
+	}
 	logger(logEntryType, "---- Hornbill API Scheduler V"+fmt.Sprintf("%v", version)+" ----", true)
 	logger(logEntryType, "Flag - Configuration File: "+configFileName, true)
 	logger(logEntryType, "Scheduler started at: "+currTime, true)
