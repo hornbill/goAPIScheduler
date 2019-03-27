@@ -4,8 +4,6 @@ The utility provides a quick and easy way to schedule the running of Hornbill AP
 
 ## Installation
 
-### Windows
-
 * Download the OS-specific ZIP archive containing the executables, configuration file and license;
 * Extract the ZIP archive into a folder you would like the application to run from e.g. 'C:\hornbill_scheduler\'.
 
@@ -21,6 +19,7 @@ Example JSON File:
     {
       "Enabled":true,
       "CronSchedule":"0 1 23 * * 1-6",
+      "DayOfMonthANDDayOfWeek": false,
       "ScheduleFrom":"2016-11-12T00:00:00.000Z",
       "ScheduleTo":"2017-01-01T00:00:00.000Z",
       "Service":"apps/com.hornbill.servicemanager/Incidents",
@@ -49,6 +48,7 @@ Example JSON File:
     {
       "Enabled":true,
       "CronSchedule":"* * * * * 1-5",
+      "DayOfMonthANDDayOfWeek": false,
       "ScheduleFrom":"2016-11-12T00:00:00.000Z",
       "ScheduleTo":"2017-01-01T00:00:00.000Z",
       "Service":"apps/com.hornbill.servicemanager/Requests",
@@ -77,6 +77,8 @@ Example JSON File:
 * "Schedule" - A JSON array, where each object within this array contains the configuration for one scheduled and repeatable task:
   * "Enabled" - set to true to enable the schedule item
   * "CronSchedule" - A Cron compatible schedule expression to schedule the API call by
+  * "DayOfMonthANDDayOfWeek" - Boolean true or false. When true, the content of BOTH Day of Week and Day of Month parts of the expression will be enforced, rather than the crontab standard of either.
+    * NOTE: the following special characters are supported in these parts of the expression when this is set to true `* , - ?`
   * "ScheduleFrom" - An RFC3339 formatted time string, to specify the date & time to start running any instances of the particular schedule entry. This can contain an empty string to allow you to not specify a date/time to start the schedule from
   * "ScheduleTo" - An RFC3339 formatted time string, to specify the date & time to stop running any more instances of the particular schedule entry. This can contain an empty string, should you wish the schedule to run indefinitely
   * "Service" - The Hornbill Service that contains the API you wish to running

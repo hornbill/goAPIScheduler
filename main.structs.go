@@ -1,7 +1,7 @@
 package main
 
 const (
-	version       = "1.2.1"
+	version       = "1.3.0"
 	timeLayout    = "2006-01-02T15:04:05.000Z"
 	cliTimeLayout = "2006/01/02 15:04:05"
 )
@@ -13,8 +13,8 @@ var (
 	configVersion  bool
 	logEntryType   = 3
 	apiCallConfig  apiCallStruct
-	boolConfLoaded bool
 	timeNow        string
+	dowMap         = make(map[string]int)
 )
 
 //----- Config Data Structs
@@ -26,13 +26,14 @@ type apiCallStruct struct {
 }
 
 type apiSchedStruct struct {
-	Enabled      bool
-	CronSchedule string
-	ScheduleFrom string
-	ScheduleTo   string
-	Service      string
-	API          string
-	APIParams    map[string]apiParamStruct
+	Enabled                bool
+	CronSchedule           string
+	DayOfMonthANDDayOfWeek bool
+	ScheduleFrom           string
+	ScheduleTo             string
+	Service                string
+	API                    string
+	APIParams              map[string]apiParamStruct
 }
 
 type apiParamStruct struct {

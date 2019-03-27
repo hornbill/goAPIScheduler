@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 1.3.0 (March 27th 2019)
+
+Features:
+
+- Added support to allow Day Of Month and Day Of Week parts of expression to both be enforced
+- Additional parsing of the cron schedules, better logging when incorrect expression provided
+
 ## 1.2.1 (March 12th 2019)
 
 Defect Fix:

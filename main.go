@@ -25,6 +25,15 @@ func main() {
 	//Time for CLI output & Log File Content
 	currTime := time.Now().Format(cliTimeLayout)
 
+	//Build map of days of week
+	dowMap["SUN"] = 0
+	dowMap["MON"] = 1
+	dowMap["TUE"] = 2
+	dowMap["WED"] = 3
+	dowMap["THU"] = 4
+	dowMap["FRI"] = 5
+	dowMap["SAT"] = 6
+
 	flag.StringVar(&configFileName, "file", "conf.json", "Name of the configuration file to load")
 	flag.BoolVar(&configDebug, "debug", false, "Set to true to run scheduler in debug mode, where API call request and reponse XML payload will be written to the log")
 	flag.BoolVar(&configDryRun, "dryrun", false, "Set to true to run scheduler in dryrun mode. No API calls will be made")
@@ -58,7 +67,12 @@ func main() {
 			logger(logEntryType, "Cron Schedule: "+scheduleEntryUnique.CronSchedule, true)
 			logger(logEntryType, "Service: "+scheduleEntryUnique.Service, true)
 			logger(logEntryType, "API: "+scheduleEntryUnique.API, true)
-			c.AddFunc(scheduleEntryUnique.CronSchedule, func() { apiRequest(scheduleEntryUnique) })
+			_, err := cron.Parse(scheduleEntryUnique.CronSchedule)
+			if err != nil {
+				logger(4, "Could not Parse CronSchedule value ["+scheduleEntryUnique.CronSchedule+"] : "+fmt.Sprintf("%v", err), true)
+			} else {
+				c.AddFunc(scheduleEntryUnique.CronSchedule, func() { apiRequest(scheduleEntryUnique) })
+			}
 		}
 	}
 
@@ -75,7 +89,88 @@ func main() {
 
 }
 
+func checkSchedule(schedule string) bool {
+	boolDOW := false
+	boolDOM := false
+
+	schedule = strings.Trim(schedule, " ")
+	schedArr := strings.Split(schedule, " ")
+	DOW := schedArr[len(schedArr)-1]
+	DOM := schedArr[len(schedArr)-3]
+
+	//Get current time and dates
+	currDOWNum := strconv.Itoa(int(time.Now().Weekday()))
+	currDOWStr := strings.ToUpper(time.Now().Format("Mon"))
+	currDOMNum := strings.TrimLeft(time.Now().Format("02"), "0")
+
+	//Check Day Of Week
+	//--Check if DOW is wildcard or ignore
+	if DOW == "*" || DOW == "?" {
+		boolDOW = true
+	} else {
+
+		//--Check if DOW is list or single value
+		listArr := strings.Split(DOW, ",")
+		for _, v := range listArr {
+			if v == currDOWNum || strings.ToUpper(v) == currDOWStr {
+				boolDOW = true
+			}
+		}
+
+		//Check if DOW is range
+		listArr = strings.Split(DOW, "-")
+		if len(listArr) == 2 {
+			//Are values int (0-6) or string (SUN-SAT)
+			min, err1 := strconv.Atoi(listArr[0])
+			max, err2 := strconv.Atoi(listArr[1])
+			if err1 != nil && err2 != nil {
+				//Couldn't convert, assume range is string SUN to SAT type
+				min = dowMap[strings.ToUpper(listArr[0])]
+				max = dowMap[strings.ToUpper(listArr[1])]
+			}
+			intCurrDOWNum, _ := strconv.Atoi(currDOWNum)
+			if intCurrDOWNum >= min && intCurrDOWNum <= max {
+				boolDOW = true
+			}
+		}
+	}
+
+	//Check Day Of Month
+	//--Check if DOM is wildcard or ignore
+	if DOM == "*" || DOM == "?" {
+		boolDOM = true
+	} else {
+
+		//--Check if DOM is list or single value
+		listArr := strings.Split(DOM, ",")
+		for _, v := range listArr {
+			if v == currDOMNum {
+				boolDOM = true
+			}
+		}
+
+		//Check if DOM is range
+		listArr = strings.Split(DOM, "-")
+		if len(listArr) == 2 {
+			min, _ := strconv.Atoi(listArr[0])
+			max, _ := strconv.Atoi(listArr[1])
+			intCurrDOMNum, _ := strconv.Atoi(currDOMNum)
+			if intCurrDOMNum >= min && intCurrDOMNum <= max {
+				boolDOM = true
+			}
+		}
+	}
+
+	return (boolDOW && boolDOM)
+}
+
 func apiRequest(scheduleEntry apiSchedStruct) {
+	if scheduleEntry.DayOfMonthANDDayOfWeek {
+		ok := checkSchedule(scheduleEntry.CronSchedule)
+		if !ok {
+			return
+		}
+	}
 	espXmlmc := apiLib.NewXmlmcInstance(apiCallConfig.InstanceID)
 	espXmlmc.SetAPIKey(apiCallConfig.APIKey)
 
