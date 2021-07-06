@@ -1,7 +1,7 @@
 package main
 
 const (
-	version       = "1.3.0"
+	version       = "1.3.1"
 	timeLayout    = "2006-01-02T15:04:05.000Z"
 	cliTimeLayout = "2006/01/02 15:04:05"
 )
